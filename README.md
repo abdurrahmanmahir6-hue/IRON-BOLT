@@ -1,6 +1,6 @@
 # mahir-ai-os
 
-A powerful AI Operating System platform.
+A modular, provider-agnostic AI Operating System designed for reasoning, automation, and extensibility.
 
 ## Project Structure
 
