@@ -1,1 +1,13 @@
-python-dotenv==1.2.2
+# Sprint 2 (Core Engine) — only actually-imported packages belong here.
+# requirements.txt should always match real imports in the codebase,
+# not future plans; that's tracked in the README's Sprint Roadmap
+# instead. Each package below is added back the sprint it's first
+# imported by code (see README.md -> Sprint Roadmap):
+#   pydantic       -> Sprint 3 (Configuration)
+#   openai         -> Sprint 4 (Provider Layer)
+#   google-genai   -> Sprint 4 (Provider Layer)
+#   tavily-python  -> Sprint 4 (Provider Layer / Tool Layer)
+#   sqlalchemy     -> Sprint 5 (Memory)
+#   fastapi        -> whenever an HTTP API surface is introduced
+#   uvicorn        -> whenever an HTTP API surface is introduced
+python-dotenv
