@@ -1,13 +1,44 @@
-# Sprint 2 (Core Engine) — only actually-imported packages belong here.
-# requirements.txt should always match real imports in the codebase,
-# not future plans; that's tracked in the README's Sprint Roadmap
-# instead. Each package below is added back the sprint it's first
-# imported by code (see README.md -> Sprint Roadmap):
-#   pydantic       -> Sprint 3 (Configuration)
-#   openai         -> Sprint 4 (Provider Layer)
-#   google-genai   -> Sprint 4 (Provider Layer)
-#   tavily-python  -> Sprint 4 (Provider Layer / Tool Layer)
-#   sqlalchemy     -> Sprint 5 (Memory)
-#   fastapi        -> whenever an HTTP API surface is introduced
-#   uvicorn        -> whenever an HTTP API surface is introduced
-python-dotenv
+annotated-types==0.7.0
+anyio==4.14.1
+certifi==2026.6.17
+cffi==2.1.0
+charset-normalizer==3.4.8
+cryptography==49.0.0
+distro==1.9.0
+google-ai-generativelanguage==0.6.15
+google-api-core==2.31.0
+google-api-python-client==2.198.0
+google-auth==2.55.1
+google-auth-httplib2==0.4.0
+google-generativeai==0.8.6
+googleapis-common-protos==1.75.0
+grpcio==1.82.0
+grpcio-status==1.71.2
+h11==0.16.0
+httpcore==1.0.9
+httplib2==0.32.0
+httpx==0.28.1
+idna==3.18
+iniconfig==2.3.0
+jiter==0.16.0
+openai==2.44.0
+packaging==26.2
+pluggy==1.6.0
+proto-plus==1.28.0
+protobuf==5.29.6
+pyasn1==0.6.3
+pyasn1_modules==0.4.2
+pycparser==3.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+Pygments==2.20.0
+pyparsing==3.3.2
+pytest==9.1.1
+python-dotenv==1.2.2
+requests==2.34.2
+sniffio==1.3.1
+tqdm==4.68.4
+typing-inspection==0.4.2
+typing_extensions==4.16.0
+uritemplate==4.2.0
+urllib3==2.7.0
