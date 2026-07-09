@@ -210,6 +210,9 @@ class OpenAIProvider(BaseProvider):
                 f"OpenAIProvider.generate() failed: {exc}"
             ) from exc
 
+        if not completion or not completion.choices:
+            raise ProviderRequestError("OpenAIProvider received an empty response from the API.")
+
         content = completion.choices[0].message.content or ""
         return ProviderResponse(
             content=content,

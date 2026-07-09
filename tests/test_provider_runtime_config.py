@@ -47,7 +47,8 @@ class TestDefaults(_EnvIsolatedTestCase):
     def test_defaults_when_unset(self):
         config = get_config()
         self.assertEqual(config.providers.active_provider, "openai")
-        self.assertEqual(config.providers.model, "")
+        # Updated to match the new default model gpt-5.5
+        self.assertEqual(config.providers.model, "gpt-5.5")
         self.assertEqual(config.providers.timeout_seconds, 30.0)
         self.assertEqual(config.providers.temperature, 0.7)
 
