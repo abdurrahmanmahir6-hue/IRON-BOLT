@@ -1,7 +1,7 @@
 # Mahir AI OS
 
-**Version:** AR1 (Alpha Release 1) — Sprint 2 complete
-**Status:** Core Engine only. No AI provider is called yet.
+**Version:** AR1 (Alpha Release 1) — Sprint 3 (Task 5) in progress
+**Status:** Core Engine + OpenAI Provider Layer.
 
 ## Project Overview
 
@@ -25,6 +25,7 @@ Router          (core/router.py)      — keyword → agent_id
   ▼
 Orchestrator    (core/orchestrator.py) — wires Config/State/Router together
   │
+  ├──▶ Provider Layer (providers/)     — OpenAI, Gemini, etc. (Sprint 3)
   ├──▶ Agent Layer   (Sprint 3+, not implemented)
   └──▶ Tool Layer    (behind the ToolDispatcher interface, not implemented)
   │
@@ -37,6 +38,7 @@ Supporting modules:
 - `core/state.py` — in-memory session/task state (no persistence yet).
 - `core/logger.py` — central logging, console + optional rotating file, optional JSON output.
 - `core/interfaces.py` — abstract contracts (`ToolDispatcher`) for layers that don't exist yet.
+- `core/startup_validation.py` — validates environment and API keys at startup.
 
 ## Folder Structure
 
@@ -49,27 +51,32 @@ mahir-ai-os/
 │   ├── logger.py
 │   ├── router.py
 │   ├── orchestrator.py
-│   └── interfaces.py
+│   ├── interfaces.py
+│   └── startup_validation.py
+├── providers/
+│   ├── __init__.py
+│   ├── base_provider.py
+│   ├── openai_provider.py
+│   ├── provider_manager.py
+│   ├── registry.py
+│   └── exceptions.py
 ├── tests/
 │   ├── __init__.py
 │   ├── test_config.py
 │   ├── test_state.py
 │   ├── test_router.py
 │   ├── test_orchestrator.py
-│   └── test_logger.py
+│   ├── test_logger.py
+│   ├── test_startup_validation.py
+│   ├── test_provider_runtime_config.py
+│   └── test_openai_provider.py
 ├── main.py
 ├── requirements.txt
 ├── .gitignore
 ├── .env.example
-└── README.md
+├── README.md
+└── sprint3.md
 ```
-
-> Folders from the original Sprint 1 skeleton that aren't in this
-> deliverable yet — `agents/`, `skills/`, `tools/`, `memory/`,
-> `database/`, `configs/`, `prompts/`, `docs/` — are intentionally
-> absent. Each is created in the sprint that first needs it (see
-> **Sprint Roadmap** below), so the repo never carries empty,
-> speculative folders.
 
 ## Installation
 
@@ -88,86 +95,32 @@ cp .env.example .env        # then fill in any keys you already have
 python main.py
 ```
 
-This prints a startup banner confirming every core module initialized,
-then drops into an interactive prompt:
-
-```
-You: please fix this python bug
-[coding_agent] [Sprint 2 placeholder] Input would be handled by 'coding_agent'. No Agent Layer exists yet.
-
-You: exit
-Exiting.
-```
-
-Type `exit`, `quit`, or `q` to stop (Ctrl+C / Ctrl+D also exit cleanly).
-
-### Running tests
-
-No third-party test framework is required:
+## Running tests
 
 ```bash
-python -m unittest discover -s tests -v
+pytest -v
 ```
-
-(If you have `pytest` installed, `pytest` also works — it auto-discovers these same tests.)
 
 ## Sprint Roadmap
 
 | Sprint | Focus | Adds |
 |---|---|---|
 | 1 | Project Skeleton | repo, venv, base folders |
-| **2** | **Core Engine** | `config.py`, `state.py`, `logger.py`, `router.py`, `orchestrator.py` — **done** |
-| 3 | Configuration | real `.env` key loading, `pydantic` |
-| 4 | Provider Layer | `providers/` (OpenAI, Gemini, base interface), `openai`, `google-genai`, `tavily-python` |
-| 5 | Memory | SQLite-backed persistence for `AppState` |
-| 6 | First AI | `python main.py` gets a real model reply |
-
-Rule carried through every sprint: **the project must run at the end
-of each sprint, even with few features. A broken project doesn't ship.**
+| 2 | Core Engine | `config.py`, `state.py`, `logger.py`, `router.py`, `orchestrator.py` |
+| **3** | **Provider Layer** | `providers/` (OpenAI, Gemini), `startup_validation.py`, `pydantic` — **in progress** |
+| 4 | Memory | SQLite-backed persistence for `AppState` |
+| 5 | Agent Layer | First real AI agent implementation |
+| 6 | Tool Layer | TAVILY, Google Search, and Python Interpreter |
 
 ## Environment Variables
 
-Defined in `.env` (see `.env.example`); none are required for Sprint 2 to run:
+Defined in `.env` (see `.env.example`):
 
-| Variable | Used by | Required in Sprint 2? |
-|---|---|---|
-| `APP_NAME`, `APP_VERSION`, `ENVIRONMENT`, `LOG_LEVEL` | `core/config.py` | No — all have defaults |
-| `OPENAI_API_KEY` | Sprint 4 Provider Layer | No |
-| `GEMINI_API_KEY` | Sprint 4 Provider Layer | No |
-| `TAVILY_API_KEY` | Sprint 4 Tool Layer | No |
+| Variable | Description |
+|---|---|
+| `OPENAI_API_KEY` | Required for OpenAI Provider |
+| `MODEL_NAME` | Default model (e.g., `gpt-5.5`) |
+| `ACTIVE_PROVIDER` | Current active provider (e.g., `openai`) |
 
 Secrets are never logged in plain text — `Config.masked_summary()` only
 reports whether a key is set and its length.
-
-## Example Output
-
-```
-========================================
-Mahir AI OS
-Version AR1
-Core Loaded
-Configuration Loaded
-Logger Ready
-State Ready
-Router Ready
-Orchestrator Ready
-System Initialized Successfully
-========================================
-Type a message and press Enter. Type 'exit' to quit.
-
-You: look up the latest research papers
-[research_agent] [Sprint 2 placeholder] Input would be handled by 'research_agent'. No Agent Layer exists yet.
-```
-
-## Known Limitations (tracked, not hidden)
-
-- **Router is keyword-based, not an intent classifier.** Word-boundary
-  matching (Sprint 2 fix) stops fragment false positives like "code"
-  matching inside "encode"/"barcode". It does **not** resolve
-  same-word-different-meaning cases (e.g. "what's my zip code" still
-  matches the literal word "code"). A real tokenizer/intent classifier
-  is planned for Sprint 3.
-- **No Agent or Tool Layer yet.** `Orchestrator._dispatch_to_agent` and
-  `_dispatch_to_tool` are documented seams, not implementations.
-- **No persistence.** `AppState` lives only in memory for the current
-  process; Sprint 5 adds SQLite-backed storage.
