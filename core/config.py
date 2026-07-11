@@ -244,6 +244,7 @@ class ProviderConfig:
     grok_api_key:       Optional[SecretValue] = None
     deepseek_api_key:   Optional[SecretValue] = None
     openrouter_api_key: Optional[SecretValue] = None
+    groq_api_key:				Optional[SecretValue] = None 
     ollama_base_url:    str = "http://localhost:11434"
 
     # ── Sprint 3 Task 3: active provider runtime parameters ────────────────
@@ -274,7 +275,7 @@ class ProviderConfig:
 
 # Provider names that map to fields of the form ``{name}_api_key``.
 _PROVIDER_FIELD_NAMES: List[str] = [
-    "openai", "gemini", "tavily", "claude", "grok", "deepseek", "openrouter"
+    "openai", "gemini", "tavily", "claude", "grok", "deepseek", "openrouter"," groq"
 ]
 
 
@@ -492,6 +493,7 @@ class Config:
             "grok_api_key":         _mask(self.providers.grok_api_key),
             "deepseek_api_key":     _mask(self.providers.deepseek_api_key),
             "openrouter_api_key":   _mask(self.providers.openrouter_api_key),
+            "groq_api_key": 				_mask(self.providers.groq_api_key),
             "database_backend":     self.database.backend.value,
             "configured_providers": self.providers.configured_providers(),
             "mcp_enabled":          self.mcp.enabled,
@@ -606,6 +608,7 @@ def _build(dotenv_path: Optional[str] = None) -> Config:
         grok_api_key       = _secret("GROK_API_KEY"),
         deepseek_api_key   = _secret("DEEPSEEK_API_KEY"),
         openrouter_api_key = _secret("OPENROUTER_API_KEY"),
+        groq_api_key			 = _secret("OPENROUTER_API_KEY"),
         ollama_base_url    = _get("OLLAMA_BASE_URL", "http://localhost:11434"),
         # Sprint 3 Task 3 — active provider runtime parameters. Parsed
         # permissively here; core/startup_validation.py judges validity.
