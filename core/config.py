@@ -248,8 +248,8 @@ class ProviderConfig:
     ollama_base_url:    str = "http://localhost:11434"
 
     # ── Sprint 3 Task 3: active provider runtime parameters ────────────────
-    active_provider: str   = "openai"
-    model:           str   = ""
+    active_provider: str   = "groq"
+    model:           str   = "openai/gpt-oss-120b"
     timeout_seconds: float = 30.0
     temperature:     float = 0.7
 
