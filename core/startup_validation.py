@@ -54,7 +54,7 @@ class StartupValidationError(ConfigError):
 # selectable BaseProvider for generation, so it is not a valid
 # ACTIVE_PROVIDER value.
 KNOWN_LLM_PROVIDERS: frozenset[str] = frozenset(
-    {"openai", "gemini", "claude", "grok", "deepseek", "openrouter", "ollama"}
+    {"openai", "gemini", "claude", "grok", "deepseek", "openrouter", "ollama", "groq"}
 )
 
 # Providers that operate without an API key (e.g. a local Ollama server).

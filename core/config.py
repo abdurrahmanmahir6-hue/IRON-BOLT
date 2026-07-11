@@ -244,12 +244,12 @@ class ProviderConfig:
     grok_api_key:       Optional[SecretValue] = None
     deepseek_api_key:   Optional[SecretValue] = None
     openrouter_api_key: Optional[SecretValue] = None
-    groq_api_key:				Optional[SecretValue] = None 
+    groq_api_key:       Optional[SecretValue] = None
     ollama_base_url:    str = "http://localhost:11434"
 
     # ── Sprint 3 Task 3: active provider runtime parameters ────────────────
     active_provider: str   = "groq"
-    model:           str   = "openai/gpt-oss-120b"
+    model:           str   = "llama-3.1-8b-instant"
     timeout_seconds: float = 30.0
     temperature:     float = 0.7
 
@@ -493,7 +493,7 @@ class Config:
             "grok_api_key":         _mask(self.providers.grok_api_key),
             "deepseek_api_key":     _mask(self.providers.deepseek_api_key),
             "openrouter_api_key":   _mask(self.providers.openrouter_api_key),
-            "groq_api_key": 				_mask(self.providers.groq_api_key),
+            "groq_api_key":         _mask(self.providers.groq_api_key),
             "database_backend":     self.database.backend.value,
             "configured_providers": self.providers.configured_providers(),
             "mcp_enabled":          self.mcp.enabled,
@@ -613,7 +613,7 @@ def _build(dotenv_path: Optional[str] = None) -> Config:
         # Sprint 3 Task 3 — active provider runtime parameters. Parsed
         # permissively here; core/startup_validation.py judges validity.
         active_provider = _get("ACTIVE_PROVIDER", "groq").strip().lower(),
-        model           = _get("MODEL_NAME", "openai/gpt-oss-120b"),
+        model           = _get("MODEL_NAME", "llama-3.1-8b-instant"),
         timeout_seconds = _float("PROVIDER_TIMEOUT_SECONDS", 30.0),
         temperature     = _float("TEMPERATURE", 0.7),
     )
