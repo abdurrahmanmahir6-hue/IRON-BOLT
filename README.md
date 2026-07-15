@@ -1,126 +1,218 @@
-# Mahir AI OS
+# IRON BOLT
 
-**Version:** AR1 (Alpha Release 1) — Sprint 3 (Task 5) in progress
-**Status:** Core Engine + OpenAI Provider Layer.
+<div align="center">
 
-## Project Overview
+### An Open, Modular & Provider-Agnostic AI Assistant Platform
 
-Mahir AI OS is a modular, provider-agnostic AI Operating System — not a
-single chatbot. It's designed around a Router, an Orchestrator, and
-(in later sprints) an Agent Layer, a Skill Layer, and a Tool Layer, so
-that new AI providers, agents, and tools can be added without
-rewriting existing code. This project follows the **MAFS v1.0**
-constitution: privacy-first, human-in-the-loop for irreversible
-actions, least-privilege by default, and everything logged and
-explainable.
+**Think • Plan • Use Tools • Execute Tasks**
 
-## Architecture Diagram
+*Building an AI assistant that goes beyond conversation.*
 
-```
-User
-  │
-  ▼
-Router          (core/router.py)      — keyword → agent_id
-  │
-  ▼
-Orchestrator    (core/orchestrator.py) — wires Config/State/Router together
-  │
-  ├──▶ Provider Layer (providers/)     — OpenAI, Gemini, etc. (Sprint 3)
-  ├──▶ Agent Layer   (Sprint 3+, not implemented)
-  └──▶ Tool Layer    (behind the ToolDispatcher interface, not implemented)
-  │
-  ▼
-Output
-```
+</div>
 
-Supporting modules:
-- `core/config.py` — loads and validates configuration from `.env`.
-- `core/state.py` — in-memory session/task state (no persistence yet).
-- `core/logger.py` — central logging, console + optional rotating file, optional JSON output.
-- `core/interfaces.py` — abstract contracts (`ToolDispatcher`) for layers that don't exist yet.
-- `core/startup_validation.py` — validates environment and API keys at startup.
+---
 
-## Folder Structure
+## Overview
 
-```
-mahir-ai-os/
-├── core/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── state.py
-│   ├── logger.py
-│   ├── router.py
-│   ├── orchestrator.py
-│   ├── interfaces.py
-│   └── startup_validation.py
-├── providers/
-│   ├── __init__.py
-│   ├── base_provider.py
-│   ├── openai_provider.py
-│   ├── provider_manager.py
-│   ├── registry.py
-│   └── exceptions.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_config.py
-│   ├── test_state.py
-│   ├── test_router.py
-│   ├── test_orchestrator.py
-│   ├── test_logger.py
-│   ├── test_startup_validation.py
-│   ├── test_provider_runtime_config.py
-│   └── test_openai_provider.py
-├── main.py
-├── requirements.txt
-├── .gitignore
-├── .env.example
-├── README.md
-└── sprint3.md
-```
+IRON BOLT is an open, modular AI assistant platform designed to perform real-world tasks instead of only generating text.
 
-## Installation
+It combines Large Language Models (LLMs), intelligent agents, tool execution, memory, and workflow automation into a single extensible system.
 
-```bash
-git clone <your-repo-url>
-cd mahir-ai-os
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env        # then fill in any keys you already have
-```
+Rather than being locked to one AI provider, IRON BOLT allows multiple models to work through the same architecture.
 
-## How to Run
+The objective is to create an assistant that can understand requests, reason about them, select appropriate tools, and safely execute tasks with user permission.
 
-```bash
-python main.py
-```
+---
 
-## Running tests
+# Vision
 
-```bash
-pytest -v
-```
+Create an intelligent assistant capable of helping users complete real work—not simply answer questions.
 
-## Sprint Roadmap
+IRON BOLT aims to become a platform where reasoning, planning, memory, and tool execution work together as one system.
 
-| Sprint | Focus | Adds |
-|---|---|---|
-| 1 | Project Skeleton | repo, venv, base folders |
-| 2 | Core Engine | `config.py`, `state.py`, `logger.py`, `router.py`, `orchestrator.py` |
-| **3** | **Provider Layer** | `providers/` (OpenAI, Gemini), `startup_validation.py`, `pydantic` — **in progress** |
-| 4 | Memory | SQLite-backed persistence for `AppState` |
-| 5 | Agent Layer | First real AI agent implementation |
-| 6 | Tool Layer | TAVILY, Google Search, and Python Interpreter |
+---
 
-## Environment Variables
+# Why IRON BOLT?
 
-Defined in `.env` (see `.env.example`):
+Modern AI assistants are often limited to conversation.
 
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | Required for OpenAI Provider |
-| `MODEL_NAME` | Default model (e.g., `gpt-5.5`) |
-| `ACTIVE_PROVIDER` | Current active provider (e.g., `openai`) |
+IRON BOLT focuses on action.
 
-Secrets are never logged in plain text — `Config.masked_summary()` only
-reports whether a key is set and its length.
+Instead of only saying *how* to do something, it should be able to help *do it*.
+
+Examples include:
+
+- Writing code
+- Debugging projects
+- Managing files
+- Running Python
+- Reading documents
+- Using external APIs
+- Browser automation
+- Multi-step task execution
+
+---
+
+# Core Features
+
+## Intelligent Agent System
+
+- Task Planning
+- Reasoning
+- Reflection
+- Execution
+- Error Recovery
+
+---
+
+## Tool System
+
+Designed to work with independent tools.
+
+Examples:
+
+- File System
+- Python
+- Web Search
+- Browser
+- APIs
+- Future MCP Tools
+
+---
+
+## Provider Agnostic
+
+Supports multiple AI providers without changing the project architecture.
+
+Possible providers include:
+
+- Groq
+- OpenAI
+- Claude
+- Gemini
+- OpenRouter
+- Ollama
+- Future providers
+
+---
+
+## Modular Architecture
+
+Every component is replaceable.
+
+Examples:
+
+- Providers
+- Agents
+- Tools
+- Memory
+- API
+- UI
+
+This makes the project scalable and easy to maintain.
+
+---
+
+## Memory
+
+The platform is designed to support:
+
+- Conversation Memory
+- User Memory
+- Project Memory
+- Long-Term Memory
+
+---
+
+# Design Philosophy
+
+IRON BOLT follows a few simple principles.
+
+- Build modular systems.
+- Avoid provider lock-in.
+- Prefer clean architecture.
+- Make every component replaceable.
+- Design for long-term scalability.
+- Keep the user in control.
+- Prioritize reliability over unnecessary complexity.
+
+---
+
+# Current Development
+
+IRON BOLT is currently under active development.
+
+The current focus is building a stable core architecture before implementing advanced AI capabilities.
+
+Development progress is documented in:
+
+- **WORKFLOW.md**
+
+Complete architecture is documented in:
+
+- **ARCHITECTURE.md**
+
+Development rules are documented in:
+
+- **RULES.md**
+
+---
+
+# Documentation
+
+| Document | Description |
+|----------|-------------|
+| README.md | Project overview |
+| ARCHITECTURE.md | Complete system architecture |
+| WORKFLOW.md | Development progress and changes |
+| RULES.md | Rules for AI coding assistants |
+
+---
+
+# Long-Term Roadmap
+
+Future development includes:
+
+- Advanced Agent Engine
+- Multi-Agent Collaboration
+- Workflow Automation
+- Memory Engine
+- Plugin System
+- MCP Integration
+- Local AI Support
+- Voice Interface
+- Vision Capabilities
+- Desktop Application
+- Mobile Application
+
+---
+
+# Project Status
+
+**Current Phase**
+
+Core Architecture Development
+
+---
+
+# Philosophy
+
+> **Don't build another chatbot. Build an assistant that can think, plan, and take action.**
+
+---
+
+# Author
+
+**Abdur Rahman Mahir**
+
+Creator of **IRON BOLT**
+
+Building an open, extensible, and provider-independent AI assistant platform.
+
+---
+
+## License
+
+This project is currently under active development.
+
+The license will be announced in a future release.
