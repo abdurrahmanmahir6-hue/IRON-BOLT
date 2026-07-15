@@ -6,5 +6,5 @@ Marks `core/` as a Python package so modules can be imported as
 `core.orchestrator`.
 
 Deliberately empty: no side effects should happen on package import
-(MAFS Ch.8 — no hidden behavior, everything explicit).
+(IB-AR Ch.8 — no hidden behavior, everything explicit).
 """
