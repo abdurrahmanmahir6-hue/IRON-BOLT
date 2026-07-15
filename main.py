@@ -1,7 +1,7 @@
 """
 main.py
 
-Entry point for Mahir AI OS.
+Entry point for Iron Bolt.
 
 Sprint 2 scope:
     - Wires together Config, Logger, State, Router, and Orchestrator.
