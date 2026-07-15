@@ -48,7 +48,7 @@ class AppState:
         current_user: Identifier for the active user, if any.
         current_session: The active Session, if any.
         selected_agent: agent_id of the agent currently handling the
-            task (per MAFS Ch.4 agent_id convention). Stays None until
+            task (per IB-AR Ch.4 agent_id convention). Stays None until
             a real Agent Layer exists (Sprint 3+).
         selected_skill: Name of the skill currently in use, if any.
         selected_model: Name/label of the model or provider currently
