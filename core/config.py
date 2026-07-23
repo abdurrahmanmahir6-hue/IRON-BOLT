@@ -355,7 +355,7 @@ class PluginConfig:
 @dataclass(frozen=True)
 class Config:
     """
-    Immutable application configuration for Mahir AI OS.
+    Immutable application configuration for Iron Bolt.
 
     This object is the sole source of truth for runtime configuration.
     It is constructed once (via get_config / Config.load) and cached for
@@ -666,7 +666,7 @@ def _build(dotenv_path: Optional[str] = None) -> Config:
     )
 
     return Config(
-        app_name    = _get("APP_NAME", "Mahir AI OS"),
+        app_name    = _get("APP_NAME", "Iron Bolt"),
         app_version = _get("APP_VERSION", "AR1"),
         environment = environment,
         log_level   = log_level,
