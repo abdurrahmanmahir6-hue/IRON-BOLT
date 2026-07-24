@@ -1,87 +1,64 @@
 """
 core/config.py
 ================================================================================
-Long-term configuration foundation for Iron Bolt.
+Config লোড হয় শুধু এই ফাইল থেকে। os.getenv() অন্য কোথাও কল করবে না —
+সবাই get_config() (বা `config`) ইমপোর্ট করে ভ্যালু নিবে। এই একটা রুল মানলে
+সিক্রেট লিক অডিট করা সহজ: os.getenv এর জন্য গ্রেপ করো, এই ফাইল বাদে আর
+কোথাও পেলে বুঝবা কেউ রুল ভেঙেছে।
 
-Design philosophy
------------------
-This file is intentionally the ONLY place in the codebase that reads
-environment variables. Every other module must import `get_config()` (or the
-`config` alias) and access values through the returned object — never
-os.getenv() directly. This single-choke-point rule makes secret leakage
-auditable at a glance: grep for os.getenv outside this file, find none.
+দুই লেয়ারে ভাগ করা আছে:
+  - dataclass গুলো শুধু ভ্যালু রাখে (frozen, picklable, simple)
+  - loader startup-এ একবার env/.env পড়ে, eager validate করে, dataclass
+    বানিয়ে দেয়, তারপর নিজে বাদ পড়ে যায়
 
-Architecture: dual-layer
-  - Lightweight dataclasses carry the *values* (simple, frozen, picklable).
-  - A thin loader layer reads env vars / .env once, validates eagerly, then
-    constructs those dataclasses. The loader is discarded; the dataclasses
-    live for the process lifetime.
+এভাবে করার কারণ — Sprint 2 এর পুরনো কলসাইট (Config.load/validate/
+masked_summary) ভাঙেনি, আর Sprint 3-এর singleton + subsection dataclass
+উপরে বসিয়ে দেওয়া গেছে। পরে কেউ নতুন field যোগ করলে শুধু নিজের subsection
+dataclass টাচ করবে, বাকি কিছু না।
 
-This separation means:
-  - Sprint 2 call sites (Config.load / validate / masked_summary) still work.
-  - Sprint 3's singleton (get_config) and modular subsections are present.
-  - Future sprints add fields to the right subsection dataclass; nothing else
-    changes.
+Dependency: python-dotenv (hard dependency, না থাকলে gracefully skip করে)
+Future: pydantic-settings যোগ হলেও public API (Config, get_config,
+ConfigError, masked_summary, validate) অপরিবর্তিত থাকবে — কোথায় বসবে সেটা
+নিচে কমেন্টে মার্ক করা আছে।
 
-Dependency policy
------------------
-Hard dependency: python-dotenv (already present in Sprint 2; degrades
-gracefully when missing).
+Security — এগুলো নিয়ে কোনো ছাড় নাই:
+  - কোনো secret hardcode না
+  - repr()/str()/log/exception — কোথাও secret ভ্যালু আসবে না
+  - নতুন secret field হলে SecretValue দিয়ে wrap করবা,
+    .get_secret_value() ছাড়া বের করার কোনো রাস্তা নাই
+  - ConfigError শুধু key-এর নাম বলবে, ভ্যালু কখনো না
 
-Optional / future: pydantic-settings. The code is written so that if
-pydantic-settings is added to the project later, the *public API* (Config,
-get_config, ConfigError, masked_summary, validate) requires zero changes from
-callers. A comment marks exactly where pydantic-settings would slot in.
+IB-AR রেফারেন্স:
+  Ch. 2  — Security by Default (fail-fast validation)
+  Ch. 6  — Memory Rules (credential কখনো memory store-এ যাবে না)
+  Ch. 10 — Security (env-only secrets, সবখানে masked)
 
-Security contract
------------------
-  - No secret is hardcoded.
-  - No secret appears in repr(), str(), logs, or exception messages.
-  - SecretValue wraps every key field; .get_secret_value() is the only way out.
-  - masked_summary() / summary() never call .get_secret_value().
-  - ConfigError messages reference *names* of missing keys, never their values.
+Backward compatibility (Sprint 2 থেকে অক্ষত):
+  Config.load(dotenv_path=None) -> Config
+  Config.validate(strict=False) -> None
+  Config.masked_summary() -> dict
+  ConfigError
+  config.openai_api_key / gemini_api_key / tavily_api_key
+  config.app_name / app_version / ...
 
-MAFS compliance
----------------
-  - Chapter 2  (Security by Default): fail-fast validation on startup.
-  - Chapter 6  (Memory Rules): credentials are never written to memory store.
-  - Chapter 10 (Security): env-only secrets, masked in all output.
+Sprint 3-এ যা নতুন যোগ হয়েছে:
+  get_config() -> Config                 singleton
+  Config.providers / .database / .memory / .mcp / .plugins
+  Config.summary()                       masked_summary()-এর alias
+  Environment / LogLevel / DatabaseBackend   enums
 
-Backward compatibility (Sprint 2 contract)
-------------------------------------------
-  Config.load(dotenv_path=None) -> Config     ✓ preserved
-  Config.validate(strict=False) -> None       ✓ preserved (strict kwarg works)
-  Config.masked_summary() -> dict             ✓ preserved (keys unchanged)
-  ConfigError                                 ✓ preserved
-  config.openai_api_key                       ✓ preserved (str | None)
-  config.gemini_api_key                       ✓ preserved
-  config.tavily_api_key                       ✓ preserved
-  config.app_name / app_version / ...         ✓ preserved
+Sprint 3, Task 3 — environment validation fields:
+  Config.providers.active_provider   str
+  Config.providers.model             str
+  Config.providers.timeout_seconds   float
+  Config.providers.temperature       float
 
-New public surface (Sprint 3+)
--------------------------------
-  get_config() -> Config                      singleton accessor
-  Config.providers                            ProviderConfig subsection
-  Config.database                             DatabaseConfig subsection
-  Config.memory                               MemoryConfig subsection
-  Config.mcp                                  MCPConfig subsection
-  Config.plugins                              PluginConfig subsection
-  Config.summary() -> dict                    alias of masked_summary()
-  Environment / LogLevel / DatabaseBackend    enums for validated vocabularies
-
-New public surface (Sprint 3 Task 3 — Environment Validation)
----------------------------------------------------------------
-  Config.providers.active_provider            str, which provider is selected
-  Config.providers.model                      str, model name for that provider
-  Config.providers.timeout_seconds            float, request timeout
-  Config.providers.temperature                float, generation temperature
-  These four fields are read-only raw values. Deep, cross-cutting validation
-  (is active_provider a known/registered name? is the matching API key
-  present? etc.) intentionally lives in core/startup_validation.py, not here,
-  so this file stays a pure "read env vars, coerce types" layer with no
-  dependency on the providers/ package (avoids a circular import: providers/
-  already imports nothing from core/config, and startup_validation.py is the
-  one place allowed to depend on both).
+নোট: এই চারটা শুধু raw read + type coerce, কোনো ডিপ ভ্যালিডেশন এখানে নাই।
+active_provider আসলেই রেজিস্টার্ড কিনা, matching API key আছে কিনা — এসব চেক
+core/startup_validation.py-তে। কারণ providers/ প্যাকেজ core/config থেকে
+কিছু ইমপোর্ট করে না, আর এখানে providers/ টেনে আনলে circular import হয়ে
+যেত। startup_validation.py-ই একমাত্র জায়গা যেখানে দুটো নির্ভরতা একসাথে
+থাকার অনুমতি আছে।
 ================================================================================
 """
 
