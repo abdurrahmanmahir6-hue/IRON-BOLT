@@ -42,7 +42,6 @@ class IronBolt:
         registry = ProviderRegistry()
 
         self.provider_manager = ProviderManager(registry)
-        self.provider_manager = ProviderManager()
        
         print("[OK] Provider Layer")
 
