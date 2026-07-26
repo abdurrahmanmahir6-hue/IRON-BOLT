@@ -1,100 +1,148 @@
-"""
-main.py
+# ============================================
+# EXISTING IMPORTS (তোমার আগের imports)
+# ============================================
+from core.config import Config
+from core.startup_validation import StartupValidation
+from providers.provider_manager import ProviderManager
 
-Entry point for Iron Bolt.
-
-Sprint 2 scope:
-    - Wires together Config, Logger, State, Router, and Orchestrator.
-    - Prints a startup banner confirming every core module initialized.
-    - Does NOT call any AI provider (that begins in Sprint 6).
-"""
-
-from __future__ import annotations
-
-import uuid
-
-from core.config import Config, ConfigError
-from core.logger import configure_logging, get_logger
-from core.orchestrator import Orchestrator
-from core.state import AppState
-
-BANNER_WIDTH = 40
-EXIT_COMMANDS = {"exit", "quit", "q"}
+# ============================================
+# NEW IMPORTS (নতুন layers)
+# ============================================
+from agent.agent_manager import get_agent_manager
+from tools.tool_manager import get_tool_manager, CalculatorTool, FileTool
+from memory.memory_manager import get_memory_manager
+from workflow.workflow_engine import get_workflow_engine
+from database.database_manager import get_database_manager
 
 
-def print_banner(config: Config) -> None:
-    """Print the Sprint 2 startup banner."""
-    line = "=" * BANNER_WIDTH
-    print(line)
-    print("Mahir AI OS")
-    print(f"Version {config.app_version}")
-    print("Core Loaded")
-    print("Configuration Loaded")
-    print("Logger Ready")
-    print("State Ready")
-    print("Router Ready")
-    print("Orchestrator Ready")
-    print("System Initialized Successfully")
-    print(line)
+class IronBolt:
+    def __init__(self):
+        self.config = None
+        self.provider_manager = None
+        self.agent_manager = None
+        self.tool_manager = None
+        self.memory_manager = None
+        self.workflow_engine = None
+        self.db_manager = None
+        self.initialized = False
+
+    def initialize(self):
+        """Initialize all IRON BOLT layers."""
+        print("=" * 50)
+        print("IRON BOLT - Initializing...")
+        print("=" * 50)
+
+        # 1. Core Layer (তোমার existing)
+        self.config = Config()
+        validation = StartupValidation()
+        validation.validate()
+        print("[OK] Core Layer")
+
+        # 2. Provider Layer (তোমার existing)
+        self.provider_manager = ProviderManager()
+        self.provider_manager.initialize()
+        print("[OK] Provider Layer")
+
+        # 3. Database Layer (NEW)
+        self.db_manager = get_database_manager()
+        self.db_manager.initialize()
+        print("[OK] Database Layer")
+
+        # 4. Memory Layer (NEW)
+        self.memory_manager = get_memory_manager()
+        print("[OK] Memory Layer")
+
+        # 5. Tool Layer (NEW)
+        self.tool_manager = get_tool_manager()
+        self._register_default_tools()
+        print("[OK] Tool Layer")
+
+        # 6. Agent Layer (NEW - এটাই main fix!)
+        self.agent_manager = get_agent_manager()
+        self.agent_manager.set_dependencies(
+            provider_manager=self.provider_manager,
+            memory_manager=self.memory_manager,
+            tool_manager=self.tool_manager
+        )
+        general_agent = self.agent_manager.create_general_agent()
+        self.agent_manager.register_agent(general_agent, is_default=True)
+        print("[OK] Agent Layer")
+
+        # 7. Workflow Layer (NEW)
+        self.workflow_engine = get_workflow_engine(
+            tool_manager=self.tool_manager,
+            provider_manager=self.provider_manager,
+            memory_manager=self.memory_manager
+        )
+        print("[OK] Workflow Layer")
+
+        self.initialized = True
+        print("=" * 50)
+        print("IRON BOLT - Ready")
+        print("=" * 50)
+
+    def _register_default_tools(self):
+        """Register default tools."""
+        self.tool_manager.register_tool(CalculatorTool())
+        self.tool_manager.register_tool(FileTool())
+
+    def chat(self, message: str) -> str:
+        """Process a user message and return response."""
+        if not self.initialized:
+            raise RuntimeError("IRON BOLT not initialized. Call initialize() first.")
+
+        # Agent Manager দিয়ে process করো
+        result = self.agent_manager.process(
+            user_request=message,
+            conversation_history=self.memory_manager.get_conversation_history()
+        )
+
+        if result["success"]:
+            return result["response"]
+        else:
+            return f"Error: {result.get('error', 'Unknown error')}"
+
+    def shutdown(self):
+        """Shutdown all layers gracefully."""
+        if self.db_manager:
+            self.db_manager.shutdown()
+        print("IRON BOLT - Shutdown complete")
 
 
-def run_repl(orchestrator: Orchestrator, logger) -> None:
-    """
-    Interactive read-eval-print loop over the Orchestrator.
+# Global instance
+_iron_bolt = None
 
-    Args:
-        orchestrator: A ready-to-use Orchestrator instance.
-        logger: Logger used to record each turn for the audit trail.
+def get_iron_bolt():
+    global _iron_bolt
+    if _iron_bolt is None:
+        _iron_bolt = IronBolt()
+    return _iron_bolt
 
-    Type "exit", "quit", or "q" to stop. Ctrl+C / Ctrl+D also exit
-    cleanly instead of crashing with a traceback.
-    """
-    print("Type a message and press Enter. Type 'exit' to quit.\n")
+
+# ============================================
+# MAIN ENTRY POINT
+# ============================================
+if __name__ == "__main__":
+    bot = get_iron_bolt()
+    bot.initialize()
+
+    print("\nIRON BOLT Chat (type 'exit' to quit)\n")
+
     while True:
         try:
             user_input = input("You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nExiting.")
+            if user_input.lower() in ["exit", "quit", "bye"]:
+                break
+            if not user_input:
+                continue
+
+            response = bot.chat(user_input)
+            print(f"\nIron Bolt: {response}\n")
+
+        except KeyboardInterrupt:
             break
+        except Exception as e:
+            print(f"Error: {e}")
 
-        if not user_input:
-            continue
-        if user_input.lower() in EXIT_COMMANDS:
-            print("Exiting.")
-            break
-
-        result = orchestrator.process_input(user_input)
-        logger.info("process_input(%r) -> %s", user_input, result)
-        print(f"[{result.agent_id}] {result.message}\n")
-
-
-def main() -> None:
-    """Initialize the core system and confirm it runs end-to-end."""
-    config = Config.load()
-
-    try:
-        # Non-strict: Sprint 2 makes no provider calls, so missing
-        # provider keys must not block startup. Sprint 4+ should use
-        # config.validate(strict=True) right before a live call.
-        config.validate(strict=False)
-    except ConfigError as exc:
-        # Fail loudly and immediately rather than limping along with
-        # bad config (MAFS Ch.2: Truth Over Flattery).
-        print(f"Configuration error: {exc}")
-        raise SystemExit(1) from exc
-
-    configure_logging(level=config.log_level)
-    logger = get_logger(__name__)
-    logger.debug("Loaded config: %s", config.masked_summary())
-
-    state = AppState()
-    state.start_session(session_id=str(uuid.uuid4()))
-
-    orchestrator = Orchestrator(config=config, state=state)
-
-    print_banner(config)
-    run_repl(orchestrator, logger)
-
-
-if __name__ == "__main__":
-    main()
+    bot.shutdown()
+    print("\nGoodbye!")
