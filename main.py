@@ -2,13 +2,13 @@
 # EXISTING IMPORTS (তোমার আগের imports)
 # ============================================
 from core.config import Config
-from core.startup_validation import StartupValidation
+from core.startup_validation import validate_startup_environment
 from providers.provider_manager import ProviderManager
-
+from providers.registry import ProviderRegistry
 # ============================================
 # NEW IMPORTS (নতুন layers)
 # ============================================
-from agent.agent_manager import get_agent_manager
+from agents.agent_manager import get_agent_manager
 from tools.tool_manager import get_tool_manager, CalculatorTool, FileTool
 from memory.memory_manager import get_memory_manager
 from workflow.workflow_engine import get_workflow_engine
@@ -34,13 +34,16 @@ class IronBolt:
 
         # 1. Core Layer (তোমার existing)
         self.config = Config()
-        validation = StartupValidation()
+        validation = validate_startup_environment()
         validation.validate()
         print("[OK] Core Layer")
 
         # 2. Provider Layer (তোমার existing)
+        registry = ProviderRegistry()
+
+        self.provider_manager = ProviderManager(registry)
         self.provider_manager = ProviderManager()
-        self.provider_manager.initialize()
+       
         print("[OK] Provider Layer")
 
         # 3. Database Layer (NEW)
