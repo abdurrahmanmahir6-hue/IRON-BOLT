@@ -20,7 +20,7 @@ class TestConfigLoad(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             config = Config.load(dotenv_path=_NO_DOTENV_PATH)
             
-        self.assertEqual(config.app_name, "Mahir AI OS")
+        self.assertEqual(config.app_name, "Iron Bolt")
         self.assertEqual(config.app_version, "AR1")
         self.assertEqual(config.environment, Environment.DEVELOPMENT)
         self.assertEqual(config.log_level, LogLevel.INFO)
@@ -36,7 +36,7 @@ class TestConfigLoad(unittest.TestCase):
             "LOG_LEVEL": "DEBUG",
             "OPENAI_API_KEY": "sk-fake-openai-key",
             "GEMINI_API_KEY": "fake-gemini-key",
-            "TAVILY_API_KEY": "fake-tavily-key",
+            "GROQ_API_KEY": "fake-groq-key",
         }
         with patch.dict(os.environ, env, clear=True):
             config = Config.load(dotenv_path=_NO_DOTENV_PATH)
@@ -47,7 +47,7 @@ class TestConfigLoad(unittest.TestCase):
         self.assertEqual(config.log_level, LogLevel.DEBUG)
         self.assertEqual(config.providers.openai_api_key.get_secret_value(), "sk-fake-openai-key")
         self.assertEqual(config.providers.gemini_api_key.get_secret_value(), "fake-gemini-key")
-        self.assertEqual(config.providers.tavily_api_key.get_secret_value(), "fake-tavily-key")
+        self.assertEqual(config.providers.groq_api_key.get_secret_value(), "fake-groq-key")
 
 class TestConfigMaskedSummary(unittest.TestCase):
     def test_masked_summary_never_leaks_secret_values(self) -> None:
