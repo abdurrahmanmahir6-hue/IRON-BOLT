@@ -5,6 +5,8 @@ from core.config import Config
 from core.startup_validation import validate_startup_environment
 from providers.provider_manager import ProviderManager
 from providers.registry import ProviderRegistry
+
+
 # ============================================
 # NEW IMPORTS (নতুন layers)
 # ============================================
@@ -39,10 +41,11 @@ class IronBolt:
         print("[OK] Core Layer")
 
         # 2. Provider Layer (তোমার existing)
+        
         registry = ProviderRegistry()
 
         self.provider_manager = ProviderManager(registry)
-       
+      
         print("[OK] Provider Layer")
 
         # 3. Database Layer (NEW)
