@@ -1,35 +1,24 @@
 """
-providers package
+providers/translators/__init__.py
 
-Public exports for the Provider Layer.
+Public surface of the Translator Layer.
 
-Core Engine code should import from `providers` directly:
+Re-exports the base contract and the OpenAI concrete translator so that
+call sites can write:
 
-    from providers import BaseProvider, ProviderManager, ProviderRegistry
+    from providers.translators import BaseExceptionTranslator
+    from providers.translators import OpenAIExceptionTranslator
 
-...instead of reaching into individual submodules. This keeps the internal
-file layout free to change without breaking Core Engine imports.
-
-Note: concrete providers (OpenAIProvider, GeminiProvider) are exported here
-for convenience at the composition root (e.g. main.py, where providers are
-constructed and registered) — but the Core Engine itself (Orchestrator,
-Router, ProviderManager) should only ever type-hint against BaseProvider.
+Future providers (Gemini, Groq, Claude, Grok, Ollama) add their own
+translator modules here following the same pattern.
 """
 
-from providers.base_provider import BaseProvider, ProviderConfig, ProviderResponse
-from providers.gemini_provider import GeminiProvider
-from providers.openai_provider import OpenAIProvider
-from providers.provider_manager import ProviderManager
-from providers.registry import ProviderRegistry
-from providers.groq_provider import GroqProvider
+from __future__ import annotations
+
+from providers.translators.base import BaseExceptionTranslator
+from providers.translators.openai import OpenAIExceptionTranslator
 
 __all__ = [
-    "BaseProvider",
-    "ProviderConfig",
-    "ProviderResponse",
-    "ProviderManager",
-    "ProviderRegistry",
-    "OpenAIProvider",
-    "GeminiProvider",
-    "GroqProvider",
+    "BaseExceptionTranslator",
+    "OpenAIExceptionTranslator",
 ]
