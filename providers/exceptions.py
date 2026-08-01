@@ -105,6 +105,18 @@ class ProviderAlreadyRegisteredError(ProviderError):
 
 
 # -----------------------------------------------------------------------------
+# Initialization Errors
+# -----------------------------------------------------------------------------
+
+class ProviderInitializationError(ProviderError):
+    """
+    Raised when a provider fails to initialize (e.g., SDK client creation fails,
+    no SDK installed, or initialize() was not called before generate()).
+    """
+    pass
+
+
+# -----------------------------------------------------------------------------
 # Authentication & Authorization Errors
 # -----------------------------------------------------------------------------
 
@@ -113,6 +125,14 @@ class ProviderAuthenticationError(ProviderError):
     Raised when authentication with the provider fails.
     Examples: Invalid, missing, or expired API keys, Permission Denied.
     (Translates AuthenticationError, PermissionDenied, etc.)
+    """
+    pass
+
+
+class ProviderAuthorizationError(ProviderError):
+    """
+    Raised when the caller is authenticated but not authorized for the requested action.
+    (Translates PermissionDeniedError where distinct from authentication failure.)
     """
     pass
 
@@ -127,6 +147,10 @@ class ProviderConnectionError(ProviderError):
     (Translates APIConnectionError, NetworkError, etc.)
     """
     pass
+
+
+# Alias used by translators
+ProviderNetworkError = ProviderConnectionError
 
 
 class ProviderTimeoutError(ProviderError):
@@ -148,6 +172,23 @@ class ProviderUnavailableError(ProviderError):
 # -----------------------------------------------------------------------------
 # Request & Response Errors
 # -----------------------------------------------------------------------------
+
+class ProviderRequestError(ProviderError):
+    """
+    Raised for generic request-level errors that do not fit a more specific category.
+    Also used as a catch-all for unknown SDK exceptions.
+    (Translates APIError, APIResponseValidationError, etc.)
+    """
+    pass
+
+
+class ProviderBadRequestError(ProviderError):
+    """
+    Raised when the request payload is invalid, malformed, or rejected by the API (4xx).
+    (Translates BadRequestError, NotFoundError, ConflictError, UnprocessableEntityError, etc.)
+    """
+    pass
+
 
 class ProviderInvalidRequestError(ProviderError):
     """
