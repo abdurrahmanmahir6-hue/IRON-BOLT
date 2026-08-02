@@ -33,8 +33,8 @@ from collections import defaultdict
 from typing import Dict, Iterable, List, Set
 
 from providers.base_provider import BaseProvider
-from providers.provider_capability import Capability
-from providers.provider_info import ProviderInfo
+from providers.models.provider_capability import Capability
+from providers.models.provider_info import ProviderInfo
 
 
 class ProviderRegistry:
