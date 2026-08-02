@@ -18,9 +18,11 @@ class ProviderRequest:
     Attributes:  
         prompt:          Primary text instruction.  
         system:          Optional system / developer message.  
+        system_prompt:   Alias for system (backward compat).
         messages:        Optional chat-history style messages (list of dicts).  
         temperature:     Sampling temperature.  
         max_tokens:      Maximum tokens to generate.  
+        stream:          Whether to stream the response.
         tools:           Optional tool / function definitions.  
         tool_choice:     Optional tool-choice directive.  
         response_format: Optional JSON-mode / schema directive.  
@@ -31,9 +33,11 @@ class ProviderRequest:
   
     prompt: str  
     system: Optional[str] = None  
+    system_prompt: Optional[str] = None
     messages: Optional[list[dict[str, Any]]] = None  
     temperature: Optional[float] = None  
-    max_tokens: Optional[int] = None  
+    max_tokens: Optional[int] = None
+    stream: Optional[bool] = None
     tools: Optional[list[dict[str, Any]]] = None  
     tool_choice: Optional[Any] = None  
     response_format: Optional[dict[str, Any]] = None  
