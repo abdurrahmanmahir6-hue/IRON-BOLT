@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field  
-from typing import Any, Optional  
-  
-from providers.base_provider import BaseProvider  
-from providers.provider_capability import ProviderCapability  
+from typing import Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from providers.base_provider import BaseProvider
+
+from providers.models.provider_capability import ProviderCapability  
   
   
 @dataclass(frozen=True)  
