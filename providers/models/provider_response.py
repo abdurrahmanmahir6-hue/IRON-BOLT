@@ -17,6 +17,7 @@ class ProviderResponse:
     Attributes:  
         content:        Generated text (or final concatenated stream text).  
         provider_name:  Which provider produced the response (audit trail).  
+        provider:       Alias for provider_name (backward compat).
         model:          Actual model that was used.  
         finish_reason:  Why generation stopped.  
         usage:          Token counts / cost information.  
@@ -25,13 +26,17 @@ class ProviderResponse:
         reasoning:      Optional chain-of-thought / reasoning traces.  
         images:         Optional generated or returned images.  
         audio:          Optional generated audio.  
-        latency_ms:     Wall-clock latency of the call.  
+        latency_ms:     Wall-clock latency of the call (milliseconds).  
+        latency:        Wall-clock latency (seconds, backward compat).
+        request_id:     Correlation ID for the request.
         raw:            Untouched original SDK response (debug only).  
+        raw_response:   Alias for raw (backward compat).
         metadata:       Free-form extra data.  
     """  
   
     content: str  
-    provider_name: str  
+    provider_name: Optional[str] = None
+    provider: Optional[str] = None
     model: Optional[str] = None  
     finish_reason: Optional[str] = None  
     usage: Optional[dict[str, Any]] = None  
@@ -41,5 +46,8 @@ class ProviderResponse:
     images: Optional[list[Any]] = None  
     audio: Optional[Any] = None  
     latency_ms: Optional[float] = None  
+    latency: Optional[float] = None
+    request_id: Optional[str] = None
     raw: Any = None  
+    raw_response: Any = None
     metadata: dict[str, Any] = field(default_factory=dict)  
