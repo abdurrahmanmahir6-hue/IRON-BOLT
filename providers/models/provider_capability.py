@@ -33,3 +33,13 @@ class ProviderCapability:
   
     def supports(self, capability: Capability) -> bool:  
         return capability in self.supported  
+    # Class-level aliases for convenience access (e.g. ProviderCapability.CHAT)
+    CHAT = Capability.CHAT
+    TEXT = Capability.TEXT
+    STREAMING = Capability.STREAMING
+    VISION = Capability.VISION
+    AUDIO = Capability.AUDIO
+    TOOL_CALLING = Capability.TOOL_CALLING
+    JSON_MODE = Capability.JSON_MODE
+    EMBEDDINGS = Capability.EMBEDDINGS
+    REASONING = Capability.REASONING
