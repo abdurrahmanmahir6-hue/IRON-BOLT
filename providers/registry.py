@@ -30,7 +30,7 @@ Explicitly out of scope
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List, Set, Optional
 
 from providers.base_provider import BaseProvider
 from providers.models.provider_capability import Capability
@@ -45,16 +45,45 @@ class ProviderRegistry:
         self._capability_index: Dict[Capability, Set[str]] = defaultdict(set)
         self._model_index: Dict[str, Set[str]] = defaultdict(set)
 
-    def register(self, info: ProviderInfo) -> None:
+    def register(
+        self,
+        name_or_info: str | ProviderInfo,
+        provider: Optional[BaseProvider] = None,
+    ) -> None:
         """
         Register a provider.
+
+        Accepts either:
+            registry.register(info: ProviderInfo)
+        or:
+            registry.register("provider_name", provider_instance)
 
         Raises:
             ValueError:
                 If a provider with the same name already exists.
         """
-        if info.name in self._providers:
-            raise ValueError(f"Provider '{info.name}' is already registered.")
+        if isinstance(name_or_info, str):
+            if provider is None:
+                raise ValueError("provider instance must be provided when name is a string")
+            name = name_or_info
+            if name in self._providers:
+                raise ValueError(f"Provider '{name}' is already registered.")
+            try:
+                info = provider.info
+            except Exception:
+                info = None
+            if not isinstance(info, ProviderInfo) or info.name != name or info.provider is not provider:
+                info = ProviderInfo(
+                    name=name,
+                    display_name=getattr(provider, "DISPLAY_NAME", name.capitalize()),
+                    provider=provider,
+                )
+        elif isinstance(name_or_info, ProviderInfo):
+            info = name_or_info
+            if info.name in self._providers:
+                raise ValueError(f"Provider '{info.name}' is already registered.")
+        else:
+            raise TypeError(f"Expected str or ProviderInfo, got {type(name_or_info)}")
 
         self._providers[info.name] = info
         self._add_to_indexes(info)
@@ -76,7 +105,7 @@ class ProviderRegistry:
         self._capability_index.clear()
         self._model_index.clear()
 
-    def get(self, name: str) -> ProviderInfo:
+    def get_info(self, name: str) -> ProviderInfo:
         """
         Return ProviderInfo for a provider.
 
@@ -86,6 +115,16 @@ class ProviderRegistry:
         """
         return self._providers[name]
 
+    def get(self, name: str) -> BaseProvider:
+        """
+        Return the runtime provider instance (for backward compatibility).
+
+        Raises:
+            KeyError:
+                If the provider is not registered.
+        """
+        return self._providers[name].provider
+
     def get_provider(self, name: str) -> BaseProvider:
         """
         Return the runtime provider instance.
@@ -94,7 +133,7 @@ class ProviderRegistry:
             KeyError:
                 If the provider is not registered.
         """
-        return self.get(name).provider
+        return self._providers[name].provider
 
     def is_registered(self, name: str) -> bool:
         """Return True if the provider is registered."""
@@ -138,7 +177,7 @@ class ProviderRegistry:
             KeyError:
                 If the provider is not registered.
         """
-        return self.get(provider_name).capabilities.supports(capability)
+        return self.get_info(provider_name).capabilities.supports(capability)
 
     def __contains__(self, name: object) -> bool:
         """Return True if a provider is registered."""
@@ -150,23 +189,27 @@ class ProviderRegistry:
 
     def _add_to_indexes(self, info: ProviderInfo) -> None:
         """Populate capability and model indexes."""
-        for capability in info.capabilities.supported:
-            self._capability_index[capability].add(info.name)
+        caps = info.capabilities.supported if hasattr(info.capabilities, "supported") else info.capabilities
+        if isinstance(caps, (set, list, tuple)):
+            for capability in caps:
+                self._capability_index[capability].add(info.name)
 
         for model in info.supported_models:
             self._model_index[model].add(info.name)
 
     def _remove_from_indexes(self, info: ProviderInfo) -> None:
         """Remove provider from capability and model indexes."""
-        for capability in info.capabilities.supported:
-            providers = self._capability_index.get(capability)
-            if providers is None:
-                continue
+        caps = info.capabilities.supported if hasattr(info.capabilities, "supported") else info.capabilities
+        if isinstance(caps, (set, list, tuple)):
+            for capability in caps:
+                providers = self._capability_index.get(capability)
+                if providers is None:
+                    continue
 
-            providers.discard(info.name)
+                providers.discard(info.name)
 
-            if not providers:
-                del self._capability_index[capability]
+                if not providers:
+                    del self._capability_index[capability]
 
         for model in info.supported_models:
             providers = self._model_index.get(model)

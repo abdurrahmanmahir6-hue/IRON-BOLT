@@ -12,6 +12,7 @@ from typing import Set
   
   
 class Capability(str, Enum):  
+    CHAT = "chat"
     TEXT = "text"  
     STREAMING = "streaming"  
     VISION = "vision"  
@@ -33,6 +34,7 @@ class ProviderCapability:
   
     def supports(self, capability: Capability) -> bool:  
         return capability in self.supported  
+
     # Class-level aliases for convenience access (e.g. ProviderCapability.CHAT)
     CHAT = Capability.CHAT
     TEXT = Capability.TEXT

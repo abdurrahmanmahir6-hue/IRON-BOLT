@@ -96,20 +96,16 @@ class GroqProvider(BaseProvider):
             raise ProviderConfigurationError("GroqProvider requires a model name.")
 
         try:
-            client_kwargs: dict[str, Any] = {"api_key": config.api_key}
-
             extra = config.extra or {}
-            timeout = extra.get("timeout_seconds", extra.get("timeout"))
-            if timeout is not None:
-                client_kwargs["timeout"] = timeout
-
-            base_url = extra.get("base_url")
-            if base_url is not None:
-                client_kwargs["base_url"] = base_url
+            client_kwargs: dict[str, Any] = {
+                "api_key": config.api_key,
+                "base_url": extra.get("base_url"),
+                "timeout": extra.get("timeout_seconds", extra.get("timeout")),
+            }
 
             self._client = Groq(**client_kwargs)
         except Exception as exc:
-            raise self._translator.translate(exc) from exc
+            raise ProviderInitializationError(str(exc)) from exc
 
         self._model = config.model
         self._initialized = True
@@ -125,6 +121,11 @@ class GroqProvider(BaseProvider):
 
         Soft-fail: teardown must not raise into the caller.
         """
+        if self._client is not None:
+            try:
+                self._client.close()
+            except Exception:
+                pass
         self._client = None
         self._model = None
         self._initialized = False

@@ -36,7 +36,7 @@ class ProviderRequest:
     system_prompt: Optional[str] = None
     messages: Optional[list[dict[str, Any]]] = None  
     temperature: Optional[float] = None  
-    max_tokens: Optional[int] = None
+    max_tokens: Optional[int] = None  
     stream: Optional[bool] = None
     tools: Optional[list[dict[str, Any]]] = None  
     tool_choice: Optional[Any] = None  

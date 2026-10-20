@@ -123,6 +123,21 @@ class WorkflowEngine:
         """Create a new workflow definition."""
         return WorkflowDefinition(name, description)
 
+    def execute_workflow(
+        self,
+        workflow_or_name: Any,
+        steps: Optional[List[WorkflowStep]] = None,
+        context: Optional[WorkflowContext] = None,
+    ) -> Dict[str, Any]:
+        """Execute a workflow definition or construct and execute one."""
+        if isinstance(workflow_or_name, WorkflowDefinition):
+            return self.execute(workflow_or_name, context)
+        wf = self.create_workflow(str(workflow_or_name))
+        if steps:
+            for s in steps:
+                wf.add_step(s)
+        return self.execute(wf, context)
+
     def execute(self, workflow: WorkflowDefinition, context: WorkflowContext = None) -> Dict[str, Any]:
         """
         Execute a workflow sequentially.
@@ -155,6 +170,8 @@ class WorkflowEngine:
                 elif step.action.startswith("tool:"):
                     tool_name = step.action.split(":", 1)[1]
                     result = self._execute_tool_step(step, tool_name, context)
+                elif self.tool_manager and self.tool_manager.get_tool(step.action):
+                    result = self._execute_tool_step(step, step.action, context)
                 else:
                     result = StepResult(False, error=f"Unknown action: {step.action}")
 
@@ -192,6 +209,8 @@ class WorkflowEngine:
             # Get active provider and generate response
             provider = self.provider_manager.get_active_provider()
             response = provider.generate(prompt)
+            if hasattr(response, "content"):
+                response = response.content
 
             return StepResult(True, data=response)
         except Exception as e:

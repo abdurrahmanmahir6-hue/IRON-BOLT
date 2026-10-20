@@ -47,8 +47,7 @@ class TestDefaults(_EnvIsolatedTestCase):
     def test_defaults_when_unset(self):
         config = get_config()
         self.assertEqual(config.providers.active_provider, "groq")
-        # Updated to match the new default model llama-3.1-8b-instant
-        self.assertEqual(config.providers.model, "llama-3.1-8b-instant")
+        self.assertEqual(config.providers.model, "openai/gpt-oss-120b")
         self.assertEqual(config.providers.timeout_seconds, 30.0)
         self.assertEqual(config.providers.temperature, 0.7)
 

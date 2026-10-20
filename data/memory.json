@@ -1,0 +1,62 @@
+{
+  "entries": [
+    {
+      "id": "a773badb-1ad5-49b2-8fd7-ace4fc54d8bb",
+      "content": "test content here",
+      "memory_type": "short_term",
+      "importance": 4,
+      "user_id": null,
+      "session_id": null,
+      "metadata": {},
+      "created_at": "2026-08-31T11:45:04.195360",
+      "updated_at": "2026-08-31T11:45:04.195362",
+      "expires_at": "2026-08-31T12:45:04.195379",
+      "access_count": 0,
+      "last_accessed": null,
+      "tags": [],
+      "source": "unknown"
+    },
+    {
+      "id": "bc3d930f-6fae-4614-a187-9fd79a68b48c",
+      "content": "User likes python",
+      "memory_type": "user",
+      "importance": 4,
+      "user_id": null,
+      "session_id": null,
+      "metadata": {},
+      "created_at": "2026-10-19T06:08:17.504844",
+      "updated_at": "2026-10-19T06:08:17.504845",
+      "expires_at": null,
+      "access_count": 1,
+      "last_accessed": "2026-10-19T06:08:17.505567",
+      "tags": [],
+      "source": "unknown"
+    },
+    {
+      "id": "18dba4c3-fe25-4823-b984-f4eeb677e62a",
+      "content": "User: Hi\n\nAssistant: Hello there!",
+      "memory_type": "conversation",
+      "importance": 3,
+      "user_id": "default_user",
+      "session_id": "default_session",
+      "metadata": {
+        "turn": {
+          "user_message": "Hi",
+          "ai_response": "Hello there!",
+          "timestamp": "2026-10-19T06:08:17.505590",
+          "context": {}
+        }
+      },
+      "created_at": "2026-10-19T06:08:17.505618",
+      "updated_at": "2026-10-19T06:08:17.505619",
+      "expires_at": null,
+      "access_count": 0,
+      "last_accessed": null,
+      "tags": [
+        "conversation"
+      ],
+      "source": "conversation"
+    }
+  ],
+  "last_updated": "2026-10-19T06:08:17.505646"
+}

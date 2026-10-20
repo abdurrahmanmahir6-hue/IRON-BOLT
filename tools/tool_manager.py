@@ -217,6 +217,14 @@ class ToolManager:
         except Exception as e:
             return ToolResult(success=False, error=str(e))
 
+    def execute_tool(self, tool_name: str, **kwargs) -> ToolResult:
+        """Alias for execute()."""
+        return self.execute(tool_name, **kwargs)
+
+    def dispatch(self, tool_name: str, **kwargs) -> Any:
+        """Contract for ToolDispatcher interface."""
+        return self.execute(tool_name, **kwargs)
+
     def get_tool_descriptions_for_prompt(self) -> str:
         """Get tool descriptions formatted for LLM prompts."""
         descriptions = []

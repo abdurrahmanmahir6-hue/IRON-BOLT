@@ -1,1 +1,1 @@
-"""Test package for Mahir AI OS."""
+"""Test package for Iron Bolt."""

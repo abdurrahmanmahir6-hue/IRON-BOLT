@@ -384,13 +384,13 @@ class Config:
 
     @property
     def groq_api_key(self) -> Optional[str]:
-        """Sprint 2 compat: plain string (or None) for the Tavily key."""
+        """Sprint 2 compat: plain string (or None) for the groq key."""
         return self.providers.get_key("groq")
 
     # ── public API ─────────────────────────────────────────────────────────
 
     @staticmethod
-    def load(dotenv_path: Optional[str] = None) -> "Config":
+    def load(dotenv_path: Optional[str] = '/storage/emulated/0/IRON_BOLT_1/IRON_BOLT_MAIN/.env') -> "Config":
         """
         Load and return a fully-validated Config from the environment.
 
@@ -407,7 +407,7 @@ class Config:
         Raises:
             ConfigError: If any required value is missing or invalid.
         """
-        return _build(dotenv_path=dotenv_path)
+        return _build(dotenv_path='/storage/emulated/0/IRON_BOLT_1/IRON_BOLT_MAIN/.env')
 
     def validate(self, strict: bool = False) -> None:
         """
@@ -464,13 +464,13 @@ class Config:
             "log_level":       self.log_level.value,
             "openai_api_key":  _mask(self.providers.openai_api_key),
             "gemini_api_key":  _mask(self.providers.gemini_api_key),
-            "tavily_api_key":  _mask(self.providers.tavily_api_key),
+            "groq_api_key":  _mask(self.providers.groq_api_key),
             # Sprint 3 additions
             "claude_api_key":       _mask(self.providers.claude_api_key),
             "grok_api_key":         _mask(self.providers.grok_api_key),
             "deepseek_api_key":     _mask(self.providers.deepseek_api_key),
             "openrouter_api_key":   _mask(self.providers.openrouter_api_key),
-            "groq_api_key":         _mask(self.providers.groq_api_key),
+            "tavily_api_key":         _mask(self.providers.tavily_api_key),
             "database_backend":     self.database.backend.value,
             "configured_providers": self.providers.configured_providers(),
             "mcp_enabled":          self.mcp.enabled,
@@ -584,13 +584,13 @@ def _build(dotenv_path: Optional[str] = None) -> Config:
         claude_api_key     = _secret("CLAUDE_API_KEY"),
         grok_api_key       = _secret("GROK_API_KEY"),
         deepseek_api_key   = _secret("DEEPSEEK_API_KEY"),
-        openrouter_api_key = _secret("OPENAI_API_KEY"),
+        openrouter_api_key = _secret("OPENROUTER_API_KEY"),
         groq_api_key       = _secret("GROQ_API_KEY"),
         ollama_base_url    = _get("OLLAMA_BASE_URL", "http://localhost:11434"),
         # Sprint 3 Task 3 — active provider runtime parameters. Parsed
         # permissively here; core/startup_validation.py judges validity.
         active_provider = _get("ACTIVE_PROVIDER", "groq").strip().lower(),
-        model           = _get("MODEL_NAME", "openai/gpt-oss120b"),
+        model           = _get("MODEL_NAME", "openai/gpt-oss-120b"),
         timeout_seconds = _float("PROVIDER_TIMEOUT_SECONDS", 30.0),
         temperature     = _float("TEMPERATURE", 0.7),
     )

@@ -79,7 +79,21 @@ class ProviderManager:
         Raises:
             Whatever the registry raises when the name is unknown.
         """
-        return self._registry.get(name)
+        return self._registry.get_provider(name)
+
+    def get_active_provider(self, default_name: Optional[str] = None) -> BaseProvider:
+        """
+        Retrieve the active provider instance.
+        """
+        if default_name:
+            return self.get_provider(default_name)
+        for name in ["groq", "openai", "gemini"]:
+            if self._registry.is_registered(name):
+                return self.get_provider(name)
+        registered = self._registry.list_providers()
+        if registered:
+            return self.get_provider(registered[0])
+        raise KeyError("No active or registered providers available in ProviderManager.")
 
     def generate(
         self,

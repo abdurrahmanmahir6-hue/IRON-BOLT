@@ -255,13 +255,26 @@ Available Capabilities: Conversation, Analysis, Code Help
         """Call the provider manager to get LLM response."""
         try:
             # Get active provider from provider manager
-            provider = self.provider_manager.get_active_provider()
+            provider = None
+            for name in ['groq', 'openai', 'gemini']:
+                try:
+                    p = self.provider_manager.get_provider(name)
+                    if p and getattr(p, "_initialized", False):
+                        provider = p
+                        break
+                    elif p and provider is None:
+                        provider = p
+                except (KeyError, ValueError):
+                    continue
+
             if not provider:
                 raise RuntimeError("No active provider found")
 
             # Call provider with prompt
             response = provider.generate(prompt)
-            return response
+            if hasattr(response, "content"):
+                return response.content
+            return str(response)
 
         except Exception as e:
             raise RuntimeError(f"Provider call failed: {str(e)}")

@@ -25,7 +25,7 @@ Lifecycle
 from abc import ABC, abstractmethod  
 from typing import Any  
   
-from providers.models import ProviderConfig, ProviderRequest, ProviderResponse, ProviderInfo  
+from providers.models import ProviderConfig,ProviderRequest,ProviderResponse,ProviderInfo  
   
   
 class BaseProvider(ABC):  
@@ -68,9 +68,12 @@ class BaseProvider(ABC):
     # Optional but recommended — lets the Router discover capabilities  
     # without hard-coding provider names.  
     @property  
-    @abstractmethod  
     def info(self) -> ProviderInfo:  
         """  
         Static metadata + capability set for this provider instance.  
         """  
-        raise NotImplementedError  
+        return ProviderInfo(
+            name=getattr(self, "PROVIDER_NAME", self.__class__.__name__.lower()),
+            display_name=getattr(self, "DISPLAY_NAME", self.__class__.__name__),
+            provider=self,
+        )  

@@ -38,6 +38,10 @@ class _DummyProvider(BaseProvider):
     def close(self) -> None:
         pass
 
+    @property
+    def info(self):
+        return None
+
 
 def _make_config(**provider_overrides) -> Config:
     """Build a Config with sane defaults, overriding only ProviderConfig fields."""

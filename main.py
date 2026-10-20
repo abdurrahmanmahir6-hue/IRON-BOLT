@@ -5,6 +5,7 @@ from core.config import Config
 from core.startup_validation import validate_startup_environment
 from providers.provider_manager import ProviderManager
 from providers.registry import ProviderRegistry
+from providers import GroqProvider, OpenAIProvider, GeminiProvider, ProviderConfig
 
 
 # ============================================
@@ -34,18 +35,54 @@ class IronBolt:
         print("IRON BOLT - Initializing...")
         print("=" * 50)
 
-        # 1. Core Layer (তোমার existing)
-        self.config = Config()
-        validation = validate_startup_environment()
-        validation.validate()
+        # 1. Core Layer
+        self.config = validate_startup_environment()
+        self.config.validate()
         print("[OK] Core Layer")
 
-        # 2. Provider Layer (তোমার existing)
-        
+        # 2. Provider Layer
         registry = ProviderRegistry()
 
+        groq_provider = GroqProvider()
+        groq_key = self.config.providers.groq_api_key.get_secret_value() if self.config.providers.groq_api_key else None
+        if groq_key:
+            try:
+                groq_provider.initialize(ProviderConfig(
+                    api_key=groq_key,
+                    model=self.config.providers.model or "openai/gpt-oss-120b",
+                    extra={"timeout_seconds": self.config.providers.timeout_seconds}
+                ))
+            except Exception as e:
+                print(f"[Warning] GroqProvider initialization failed: {e}")
+        registry.register("groq", groq_provider)
+
+        openai_provider = OpenAIProvider()
+        openai_key = self.config.providers.openai_api_key.get_secret_value() if self.config.providers.openai_api_key else None
+        if openai_key:
+            try:
+                openai_provider.initialize(ProviderConfig(
+                    api_key=openai_key,
+                    model="gpt-4o-mini",
+                    extra={"timeout_seconds": self.config.providers.timeout_seconds}
+                ))
+            except Exception as e:
+                print(f"[Warning] OpenAIProvider initialization failed: {e}")
+        registry.register("openai", openai_provider)
+
+        gemini_provider = GeminiProvider()
+        gemini_key = self.config.providers.gemini_api_key.get_secret_value() if self.config.providers.gemini_api_key else None
+        if gemini_key:
+            try:
+                gemini_provider.initialize(ProviderConfig(
+                    api_key=gemini_key,
+                    model="gemini-2.0-flash",
+                    extra={"timeout_seconds": self.config.providers.timeout_seconds}
+                ))
+            except Exception as e:
+                print(f"[Warning] GeminiProvider initialization failed: {e}")
+        registry.register("gemini", gemini_provider)
+
         self.provider_manager = ProviderManager(registry)
-      
         print("[OK] Provider Layer")
 
         # 3. Database Layer (NEW)
