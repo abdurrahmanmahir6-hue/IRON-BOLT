@@ -7,13 +7,21 @@ Supports multiple backends: JSON file, SQLite, In-Memory, Vector (future).
 
 from abc import ABC, abstractmethod
 from typing import Optional, Any, List
-from datetime import datetime
+from datetime import date, datetime
 import json
 import os
+import tempfile
 
-from .models import MemoryEntry, MemoryType
+from .models import MemoryEntry, MemoryType, utc_now
 from .exceptions import MemoryStorageError, MemoryNotFoundError
 from .utils import is_expired
+
+
+def _json_default(value: Any) -> Any:
+    """Convert values commonly stored in memory metadata to JSON values."""
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
 class BaseStorageBackend(ABC):
@@ -223,8 +231,27 @@ class JSONStorage(BaseStorageBackend):
 
             # Load existing data if file exists
             if os.path.exists(self._file_path):
-                with open(self._file_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                try:
+                    with open(self._file_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except json.JSONDecodeError as exc:
+                    # A process interrupted while writing the file can leave a
+                    # truncated JSON document. Preserve it for recovery and
+                    # start with an empty store instead of blocking startup.
+                    corrupt_path = (
+                        f"{self._file_path}.corrupt-"
+                        f"{utc_now().strftime('%Y%m%d%H%M%S')}"
+                    )
+                    os.replace(self._file_path, corrupt_path)
+                    self._entries.clear()
+                    self._save_to_file()
+                    print(
+                        f"[Memory Warning] Invalid JSON in {self._file_path} "
+                        f"({exc}); moved original to {corrupt_path}"
+                    )
+                else:
+                    if not isinstance(data, dict):
+                        raise ValueError("storage root must be a JSON object")
                     for entry_data in data.get("entries", []):
                         entry = MemoryEntry.from_dict(entry_data)
                         self._entries[entry.id] = entry
@@ -242,10 +269,30 @@ class JSONStorage(BaseStorageBackend):
         try:
             data = {
                 "entries": [e.to_dict() for e in self._entries.values()],
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": utc_now().isoformat(),
             }
-            with open(self._file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            directory = os.path.dirname(self._file_path) or "."
+            fd, temp_path = tempfile.mkstemp(
+                prefix=".memory-", suffix=".json", dir=directory
+            )
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(
+                        data,
+                        f,
+                        indent=2,
+                        ensure_ascii=False,
+                        default=_json_default,
+                    )
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(temp_path, self._file_path)
+            except Exception:
+                # The temporary file is safe to remove; the live file remains
+                # untouched if serialization or replacement fails.
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                raise
             return True
         except Exception as e:
             raise MemoryStorageError(f"Failed to save to JSON file: {e}")

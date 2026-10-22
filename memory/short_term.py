@@ -9,7 +9,7 @@ from typing import Optional, Any, List
 from datetime import datetime, timedelta
 
 from .base_memory import BaseMemory
-from .models import MemoryEntry, MemoryType, MemoryImportance
+from .models import MemoryEntry, MemoryType, MemoryImportance, utc_now
 from .storage import BaseStorageBackend, create_storage_backend
 from .config import MemoryConfig, get_memory_config
 from .exceptions import MemoryError
@@ -97,7 +97,7 @@ class ShortTermMemory(BaseMemory):
             if hasattr(entry, key):
                 setattr(entry, key, value)
 
-        entry.updated_at = datetime.utcnow()
+        entry.updated_at = utc_now()
         if self._storage.update(entry):
             return entry
         return None

@@ -150,7 +150,11 @@ Available Capabilities: Conversation, Analysis, Code Help
 
             # Step 7: Update memory (if available)
             if self.memory_manager:
-                self._update_memory(user_request, response)
+                self._update_memory(
+                    user_request,
+                    response,
+                    request_timestamp=kwargs.get("request_timestamp"),
+                )
 
             self.set_state(AgentState.COMPLETED)
             return result
@@ -279,11 +283,15 @@ Available Capabilities: Conversation, Analysis, Code Help
         except Exception as e:
             raise RuntimeError(f"Provider call failed: {str(e)}")
 
-    def _update_memory(self, user_request: str, response: str):
+    def _update_memory(self, user_request: str, response: str, request_timestamp=None):
         """Update memory with conversation."""
         try:
             if self.memory_manager:
-                self.memory_manager.save_conversation(user_request, response)
+                self.memory_manager.save_conversation(
+                    user_request,
+                    response,
+                    timestamp=request_timestamp,
+                )
         except Exception as e:
             print(f"[Memory Warning] Could not update memory: {e}")
 

@@ -8,7 +8,7 @@ retrieval, update, and decision components to provide a unified interface.
 from typing import Optional, Any, List
 from datetime import datetime
 
-from .models import MemoryEntry, MemoryType, MemoryImportance
+from .models import MemoryEntry, MemoryType, MemoryImportance, utc_now
 from .config import MemoryConfig, get_memory_config
 from .storage import BaseStorageBackend, create_storage_backend, JSONStorage
 from .retrieval import MemoryRetriever
@@ -186,10 +186,15 @@ class MemoryManager:
         ai_response: str,
         user_id: str = "default_user",
         session_id: Optional[str] = "default_session",
+        timestamp=None,
     ) -> Optional[MemoryEntry]:
         """Save a conversation turn."""
         conv = self.conversation(user_id=user_id, session_id=session_id)
-        return conv.add_turn(user_message=user_message, ai_response=ai_response)
+        return conv.add_turn(
+            user_message=user_message,
+            ai_response=ai_response,
+            timestamp=timestamp or utc_now(),
+        )
 
     def get_conversation_history(
         self,

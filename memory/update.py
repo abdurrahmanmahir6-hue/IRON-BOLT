@@ -8,7 +8,7 @@ Provides strategies for intelligent memory updates.
 from typing import Optional, Any, List
 from datetime import datetime
 
-from .models import MemoryEntry, MemoryType
+from .models import MemoryEntry, MemoryType, utc_now
 from .storage import BaseStorageBackend
 from .exceptions import MemoryUpdateError, MemoryNotFoundError
 from .utils import calculate_similarity
@@ -82,7 +82,7 @@ class MemoryUpdater:
             if tags is not None:
                 entry.tags = tags
 
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = utc_now()
 
             if self._storage.update(entry):
                 return entry
@@ -139,7 +139,7 @@ class MemoryUpdater:
             base.metadata.update(other.metadata)
 
             # Update timestamp
-            base.updated_at = datetime.utcnow()
+            base.updated_at = utc_now()
 
             # Save merged entry
             if not self._storage.update(base):
@@ -172,7 +172,7 @@ class MemoryUpdater:
             if not entry:
                 return False
 
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = utc_now()
             return self._storage.update(entry)
         except Exception:
             return False

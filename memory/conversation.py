@@ -9,7 +9,7 @@ from typing import Optional, Any, List
 from datetime import datetime
 
 from .base_memory import BaseMemory
-from .models import MemoryEntry, MemoryType, ConversationTurn
+from .models import MemoryEntry, MemoryType, ConversationTurn, utc_now
 from .storage import BaseStorageBackend
 from .config import MemoryConfig, get_memory_config
 
@@ -51,6 +51,7 @@ class ConversationMemory(BaseMemory):
         user_message: str,
         ai_response: str,
         context: Optional[dict[str, Any]] = None,
+        timestamp=None,
     ) -> Optional[MemoryEntry]:
         """
         Add a conversation turn.
@@ -66,6 +67,7 @@ class ConversationMemory(BaseMemory):
         turn = ConversationTurn(
             user_message=user_message,
             ai_response=ai_response,
+            timestamp=timestamp or utc_now(),
             context=context or {},
         )
 
@@ -193,7 +195,7 @@ class ConversationMemory(BaseMemory):
         for key, value in kwargs.items():
             if hasattr(entry, key):
                 setattr(entry, key, value)
-        entry.updated_at = datetime.utcnow()
+        entry.updated_at = utc_now()
         if self._storage.update(entry):
             return entry
         return None

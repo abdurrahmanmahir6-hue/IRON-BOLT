@@ -6,7 +6,7 @@ Architecture: Abstract database interface with concrete implementations.
 
 from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 
@@ -90,9 +90,10 @@ class JSONDatabase(DatabaseInterface):
     def create(self, table: str, data: Dict[str, Any]) -> str:
         """Create a record."""
         self._ensure_table(table)
-        record_id = f"{table}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        now = datetime.now(timezone.utc)
+        record_id = f"{table}_{now.strftime('%Y%m%d_%H%M%S_%f')}"
         data["_id"] = record_id
-        data["_created_at"] = datetime.now().isoformat()
+        data["_created_at"] = now.isoformat()
         data["_updated_at"] = data["_created_at"]
         self.data[table][record_id] = data
         self.disconnect()
@@ -109,7 +110,7 @@ class JSONDatabase(DatabaseInterface):
         self._ensure_table(table)
         if record_id in self.data[table]:
             self.data[table][record_id].update(data)
-            self.data[table][record_id]["_updated_at"] = datetime.now().isoformat()
+            self.data[table][record_id]["_updated_at"] = datetime.now(timezone.utc).isoformat()
             self.disconnect()
             self.connect()
             return True

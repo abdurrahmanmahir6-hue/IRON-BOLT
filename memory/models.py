@@ -5,10 +5,29 @@ Canonical data structures for memory entries used throughout the memory system.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Any
 from enum import Enum
 import uuid
+
+
+def utc_now() -> datetime:
+    """Return the current timezone-aware UTC timestamp."""
+    return datetime.now(timezone.utc)
+
+
+def as_utc_datetime(value: Any) -> Optional[datetime]:
+    """Normalize legacy strings, naive datetimes, and aware datetimes to UTC."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
+    elif not isinstance(value, datetime):
+        raise TypeError(f"Expected datetime or ISO string, got {type(value).__name__}")
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 class MemoryType(str, Enum):
@@ -63,8 +82,8 @@ class MemoryEntry:
     user_id: Optional[str] = None
     session_id: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
+    updated_at: datetime = field(default_factory=utc_now)
     expires_at: Optional[datetime] = None
     access_count: int = 0
     last_accessed: Optional[datetime] = None
@@ -74,6 +93,11 @@ class MemoryEntry:
 
     def __post_init__(self):
         """Validate and normalize the memory entry after initialization."""
+        self.created_at = as_utc_datetime(self.created_at) or utc_now()
+        self.updated_at = as_utc_datetime(self.updated_at) or self.created_at
+        self.expires_at = as_utc_datetime(self.expires_at)
+        self.last_accessed = as_utc_datetime(self.last_accessed)
+
         # Convert string memory_type to enum if needed
         if isinstance(self.memory_type, str):
             self.memory_type = MemoryType(self.memory_type)
@@ -100,17 +124,17 @@ class MemoryEntry:
         """Check if this memory entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return utc_now() > self.expires_at
 
     def touch(self) -> None:
         """Update access statistics."""
         self.access_count += 1
-        self.last_accessed = datetime.utcnow()
+        self.last_accessed = utc_now()
 
     def update_content(self, new_content: str) -> None:
         """Update the content and refresh the updated_at timestamp."""
         self.content = new_content
-        self.updated_at = datetime.utcnow()
+        self.updated_at = utc_now()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -144,11 +168,11 @@ class MemoryEntry:
         # Make a shallow copy to avoid mutating caller's data
         data_copy = data.copy()
 
-        # Parse datetime fields
+        # Parse datetime fields without double-parsing already parsed values.
         for date_field in ["created_at", "updated_at", "expires_at", "last_accessed"]:
-            if data_copy.get(date_field):
+            if data_copy.get(date_field) is not None:
                 try:
-                    data_copy[date_field] = datetime.fromisoformat(data_copy[date_field])
+                    data_copy[date_field] = as_utc_datetime(data_copy[date_field])
                 except (ValueError, TypeError):
                     data_copy[date_field] = None
 
@@ -219,7 +243,7 @@ class ConversationTurn:
 
     user_message: str
     ai_response: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=utc_now)
     context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -234,9 +258,10 @@ class ConversationTurn:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConversationTurn":
         """Create ConversationTurn from dictionary."""
-        if data.get("timestamp"):
-            data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-        return cls(**data)
+        data_copy = data.copy()
+        if data_copy.get("timestamp") is not None:
+            data_copy["timestamp"] = as_utc_datetime(data_copy["timestamp"])
+        return cls(**data_copy)
 
 
 @dataclass
@@ -259,7 +284,7 @@ class UserPreferences:
     communication_style: str = "casual"
     topics_of_interest: list[str] = field(default_factory=list)
     custom_preferences: dict[str, Any] = field(default_factory=dict)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=utc_now)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -276,9 +301,10 @@ class UserPreferences:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "UserPreferences":
         """Create UserPreferences from dictionary."""
-        if data.get("updated_at"):
-            data["updated_at"] = datetime.fromisoformat(data["updated_at"])
-        return cls(**data)
+        data_copy = data.copy()
+        if data_copy.get("updated_at") is not None:
+            data_copy["updated_at"] = as_utc_datetime(data_copy["updated_at"])
+        return cls(**data_copy)
 
     def update_preference(self, key: str, value: Any) -> None:
         """Update a specific preference."""
@@ -288,4 +314,4 @@ class UserPreferences:
             self.topics_of_interest = value if isinstance(value, list) else [value]
         else:
             self.custom_preferences[key] = value
-        self.updated_at = datetime.utcnow()
+        self.updated_at = utc_now()

@@ -16,6 +16,7 @@ from tools.tool_manager import get_tool_manager, CalculatorTool, FileTool
 from memory.memory_manager import get_memory_manager
 from workflow.workflow_engine import get_workflow_engine
 from database.database_manager import get_database_manager
+from memory.models import utc_now
 
 
 class IronBolt:
@@ -134,9 +135,11 @@ class IronBolt:
             raise RuntimeError("IRON BOLT not initialized. Call initialize() first.")
 
         # Agent Manager দিয়ে process করো
+        request_timestamp = utc_now()
         result = self.agent_manager.process(
             user_request=message,
-            conversation_history=self.memory_manager.get_conversation_history()
+            conversation_history=self.memory_manager.get_conversation_history(),
+            request_timestamp=request_timestamp,
         )
 
         if result["success"]:

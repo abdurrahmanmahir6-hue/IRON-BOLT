@@ -9,6 +9,8 @@ import re
 from typing import Optional
 from datetime import datetime, timedelta
 
+from .models import as_utc_datetime, utc_now
+
 
 def normalize_text(text: str) -> str:
     """
@@ -97,7 +99,7 @@ def generate_expiry_timestamp(ttl_seconds: Optional[int]) -> Optional[datetime]:
     """
     if ttl_seconds is None:
         return None
-    return datetime.utcnow() + timedelta(seconds=ttl_seconds)
+    return utc_now() + timedelta(seconds=ttl_seconds)
 
 
 def is_expired(expires_at: Optional[datetime]) -> bool:
@@ -112,7 +114,7 @@ def is_expired(expires_at: Optional[datetime]) -> bool:
     """
     if expires_at is None:
         return False
-    return datetime.utcnow() > expires_at
+    return utc_now() > (as_utc_datetime(expires_at) or utc_now())
 
 
 def truncate_text(text: str, max_length: int = 1000, suffix: str = "...") -> str:

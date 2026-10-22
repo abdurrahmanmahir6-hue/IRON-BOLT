@@ -8,7 +8,7 @@ Uses configurable rules and heuristics for memory lifecycle management.
 from typing import Optional, Any, List
 from datetime import datetime, timedelta
 
-from .models import MemoryEntry, MemoryType, MemoryImportance
+from .models import MemoryEntry, MemoryType, MemoryImportance, utc_now
 from .storage import BaseStorageBackend
 from .config import MemoryConfig
 from .utils import is_duplicate, calculate_similarity
@@ -184,7 +184,7 @@ class MemoryDecisionMaker:
 
         # Check retention period for long-term memories
         if self._config.retention_days and entry.memory_type == MemoryType.LONG_TERM:
-            age = datetime.utcnow() - entry.created_at
+            age = utc_now() - entry.created_at
             if age.days > self._config.retention_days:
                 # Don't delete critical memories
                 if entry.importance < MemoryImportance.CRITICAL:
@@ -193,7 +193,7 @@ class MemoryDecisionMaker:
         # Check for low importance + very old + never accessed
         if (entry.importance == MemoryImportance.TRIVIAL and
             entry.access_count == 0):
-            age = datetime.utcnow() - entry.created_at
+            age = utc_now() - entry.created_at
             if age.days > 7:  # Old trivial memories
                 return True, "Trivial and unaccessed"
 
@@ -277,7 +277,7 @@ class MemoryDecisionMaker:
         def sort_key(e: MemoryEntry):
             expiry_score = 0 if e.is_expired() else 1
             importance_score = 5 - e.importance.value  # Lower importance = higher priority
-            age_score = (datetime.utcnow() - e.created_at).days
+            age_score = (utc_now() - e.created_at).days
             return (expiry_score, importance_score, -age_score)
 
         candidates.sort(key=sort_key)
