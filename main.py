@@ -2,6 +2,7 @@
 # EXISTING IMPORTS (তোমার আগের imports)
 # ============================================
 from core.config import Config
+from pathlib import Path
 from core.startup_validation import validate_startup_environment
 from providers.provider_manager import ProviderManager
 from providers.registry import ProviderRegistry
@@ -127,7 +128,7 @@ class IronBolt:
     def _register_default_tools(self):
         """Register default tools."""
         self.tool_manager.register_tool(CalculatorTool())
-        self.tool_manager.register_tool(FileTool())
+        self.tool_manager.register_tool(FileTool(workspace_root=Path(__file__).resolve().parent))
 
     def chat(self, message: str) -> str:
         """Process a user message and return response."""

@@ -4,7 +4,11 @@ Action Layer: Enables AI to interact with the real world.
 Architecture: Tool Manager coordinates all tools. No tool is used directly.
 """
 
-from typing import Dict, Any, Optional, List, Callable
+import ast
+import math
+import os
+from pathlib import Path
+from typing import Dict, Any, Optional, List, Callable, Union
 from abc import ABC, abstractmethod
 from enum import Enum
 import json
@@ -98,21 +102,78 @@ class CalculatorTool(BaseTool):
     def execute(self, **kwargs) -> ToolResult:
         try:
             expression = kwargs.get("expression", "")
-            # Safe evaluation - only allow basic math
-            allowed_names = {
-                "abs": abs, "max": max, "min": min,
-                "sum": sum, "pow": pow, "round": round
-            }
-            result = eval(expression, {"__builtins__": {}}, allowed_names)
+            result = self._evaluate_expression(expression)
             return ToolResult(success=True, data=result)
         except Exception as e:
             return ToolResult(success=False, error=str(e))
 
+    @staticmethod
+    def _evaluate_expression(expression: str) -> Union[int, float]:
+        """Evaluate a deliberately small arithmetic-only expression grammar."""
+        if not isinstance(expression, str) or not expression.strip():
+            raise ValueError("Expression must be a non-empty string")
+        if len(expression) > 256:
+            raise ValueError("Expression is too long")
+
+        try:
+            tree = ast.parse(expression, mode="eval")
+        except SyntaxError as exc:
+            raise ValueError("Invalid arithmetic expression") from exc
+
+        def validate_number(value: Any) -> Union[int, float]:
+            if type(value) not in (int, float):
+                raise ValueError("Only real numeric constants are allowed")
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError("Non-finite numbers are not allowed")
+            if isinstance(value, int) and value.bit_length() > 4096:
+                raise ValueError("Integer result is too large")
+            return value
+
+        def evaluate(node: ast.AST) -> Union[int, float]:
+            if isinstance(node, ast.Constant):
+                return validate_number(node.value)
+
+            if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+                operand = evaluate(node.operand)
+                return validate_number(operand if isinstance(node.op, ast.UAdd) else -operand)
+
+            if isinstance(node, ast.BinOp):
+                left = evaluate(node.left)
+                right = evaluate(node.right)
+                if isinstance(node.op, ast.Add):
+                    result = left + right
+                elif isinstance(node.op, ast.Sub):
+                    result = left - right
+                elif isinstance(node.op, ast.Mult):
+                    result = left * right
+                elif isinstance(node.op, ast.Div):
+                    result = left / right
+                elif isinstance(node.op, ast.FloorDiv):
+                    result = left // right
+                elif isinstance(node.op, ast.Mod):
+                    result = left % right
+                elif isinstance(node.op, ast.Pow):
+                    if abs(right) > 128:
+                        raise ValueError("Exponent is too large")
+                    result = left ** right
+                else:
+                    raise ValueError("Unsupported arithmetic operator")
+                return validate_number(result)
+
+            raise ValueError("Unsupported expression")
+
+        return evaluate(tree.body)
+
 
 class FileTool(BaseTool):
-    """File operations tool for AR1."""
+    """File operations constrained to one explicitly approved workspace root."""
 
-    def __init__(self):
+    def __init__(self, workspace_root: Optional[Union[str, os.PathLike]] = None):
+        self._workspace_root: Optional[Path] = None
+        if workspace_root is not None:
+            root = Path(workspace_root)
+            if root.is_absolute() and root.is_dir():
+                self._workspace_root = root.resolve()
         super().__init__(
             name="file",
             description="Read and write files",
@@ -139,24 +200,24 @@ class FileTool(BaseTool):
         }
 
     def execute(self, **kwargs) -> ToolResult:
-        import os
         action = kwargs.get("action")
         path = kwargs.get("path")
 
         try:
+            resolved_path = self._resolve_workspace_path(path)
             if action == "read":
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(resolved_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 return ToolResult(success=True, data=content)
 
             elif action == "write":
                 content = kwargs.get("content", "")
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(resolved_path, 'w', encoding='utf-8') as f:
                     f.write(content)
                 return ToolResult(success=True, data=f"File written: {path}")
 
             elif action == "list":
-                items = os.listdir(path)
+                items = os.listdir(resolved_path)
                 return ToolResult(success=True, data=items)
 
             else:
@@ -164,6 +225,27 @@ class FileTool(BaseTool):
 
         except Exception as e:
             return ToolResult(success=False, error=str(e))
+
+    def _resolve_workspace_path(self, path: Union[str, os.PathLike]) -> Path:
+        """Resolve a relative path and reject every escape from the approved root."""
+        if self._workspace_root is None:
+            raise PermissionError("File tool is disabled: no approved workspace root is configured")
+        if not isinstance(path, (str, os.PathLike)):
+            raise ValueError("Path must be a relative path")
+
+        requested_path = Path(path)
+        if requested_path.is_absolute():
+            raise PermissionError("Absolute paths are not allowed")
+
+        # resolve(strict=False) follows existing symlinks, including a symlinked
+        # parent of a not-yet-created file. The containment check therefore
+        # rejects traversal and symlink targets outside the approved root.
+        resolved_path = (self._workspace_root / requested_path).resolve(strict=False)
+        try:
+            resolved_path.relative_to(self._workspace_root)
+        except ValueError as exc:
+            raise PermissionError("Path escapes the approved workspace root") from exc
+        return resolved_path
 
 
 class ToolManager:
